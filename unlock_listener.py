@@ -20,44 +20,24 @@ def set_servo(angle):
     servo.ChangeDutyCycle(duty)
     time.sleep(0.3)
 
-# Buzzer setup (passive piezo)
+# --- Passive Piezo Buzzer ---
 BUZZ = 17
 GPIO.setup(BUZZ, GPIO.OUT)
-pwm = GPIO.PWM(BUZZ, 440)  # start at A4
+pwm = GPIO.PWM(BUZZ, 440)  # initial frequency
 
-# Zelda notes
-notes = {
-    'c': 262, 'd': 294, 'e': 330, 'f': 349,
-    'g': 392, 'a': 440, 'b': 494,
-    'C': 523, 'D': 587, 'E': 659, 'F': 698,
-    'x': 740, 'y': 784, 'z': 830, 'w': 880,
-    'q': 988, 'G': 1046, 'i': 1108
-}
-
-melody = "gabygabyxzCDxzCDabywabywzCDEzCDEbywFCDEqywFGDEqi"
-beats = [
-    1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
-    1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
-    1,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,
-    1,1,1,1, 1,1,1,1, 2,3,3,16
-]
-tempo = 0.075  # melody speed
-
-def play_note(note, duration):
-    if note == " ":
-        pwm.stop()
-        time.sleep(duration)
-        return
-    freq = notes[note]
-    pwm.ChangeFrequency(freq)
-    pwm.start(50)
-    time.sleep(duration)
-    pwm.stop()
-    time.sleep(0.01)
+# --- REAL ZELDA ITEM GET FANFARE ---
+# DA-DA-DA-DAAAAA! (C6, D6, E6, G6, C7)
+zelda_notes = [1046, 1174, 1318, 1567, 2093]
+zelda_lengths = [0.15, 0.15, 0.15, 0.30, 0.60]
 
 def play_zelda():
-    for i, n in enumerate(melody):
-        play_note(n, beats[i] * tempo)
+    """Plays the satisfying Zelda item-get jingle."""
+    for freq, dur in zip(zelda_notes, zelda_lengths):
+        pwm.ChangeFrequency(freq)
+        pwm.start(50)
+        time.sleep(dur)
+        pwm.stop()
+        time.sleep(0.03)  # tiny pause between notes
 
 # --- EVENTS ---
 def unlock():
