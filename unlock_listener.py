@@ -1,3 +1,4 @@
+import os
 from Adafruit_IO import MQTTClient
 import RPi.GPIO as GPIO
 import time
@@ -23,21 +24,19 @@ def set_servo(angle):
 # --- Passive Piezo Buzzer ---
 BUZZ = 17
 GPIO.setup(BUZZ, GPIO.OUT)
-pwm = GPIO.PWM(BUZZ, 440)  # initial frequency
+pwm = GPIO.PWM(BUZZ, 440)
 
-# --- REAL ZELDA ITEM GET FANFARE ---
-# DA-DA-DA-DAAAAA! (C6, D6, E6, G6, C7)
+# --- REAL ZELDA FANFARE ---
 zelda_notes = [1046, 1174, 1318, 1567, 2093]
 zelda_lengths = [0.15, 0.15, 0.15, 0.30, 0.60]
 
 def play_zelda():
-    """Plays the satisfying Zelda item-get jingle."""
     for freq, dur in zip(zelda_notes, zelda_lengths):
         pwm.ChangeFrequency(freq)
         pwm.start(50)
         time.sleep(dur)
         pwm.stop()
-        time.sleep(0.03)  # tiny pause between notes
+        time.sleep(0.03)
 
 # --- EVENTS ---
 def unlock():
@@ -49,6 +48,14 @@ def lock():
     print("Lock received! Closing...")
     set_servo(0)
 
+def shutdown_pi():
+    print("Shutdown command received! Shutting down safely...")
+    servo.stop()
+    pwm.stop()
+    GPIO.cleanup()
+    time.sleep(1)
+    os.system("sudo shutdown -h now")
+
 # --- MQTT ---
 def connected(client):
     print("Connected to Adafruit IO!")
@@ -56,10 +63,15 @@ def connected(client):
 
 def message(client, feed_id, payload):
     print("Feed:", feed_id, "Value:", payload)
+
     if payload == "1":
         unlock()
+
     elif payload == "0":
         lock()
+
+    elif payload == "3":
+        shutdown_pi()  # 🠔 trigger safe shutdown
 
 client = MQTTClient(AIO_USERNAME, AIO_KEY)
 client.on_connect = connected
